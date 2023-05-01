@@ -30,7 +30,11 @@ export default function App() {
         // 임의로 x, y좌표 설정 -> 나중에 수정하기 #
 
         const date = Date();
-        console.log(date);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const dateStr = `${year}${month}${day}`;
+        console.log(dateStr);
 
         const response = await fetch(`https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?dataType=json&serviceKey=MZs7g2PfCkpUqvD%2BibMxZH1cxGcxMpN4DuII6E4cF7qX0WtgW9fp8E4pTPph%2FzwBO4UNnr6Sh2HkTZZTgKD%2FCA%3D%3D&numOfRows=160&pageNo=1&base_date=20230501&base_time=0200&nx=58&ny=74`);
         const json = await response.json();

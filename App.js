@@ -12,14 +12,13 @@ import * as Location from 'expo-location';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 console.log(SCREEN_WIDTH);
+
 export default function App() {
   const [city, setCity] = useState('Loading..');
-  const [forecasts, setForecasts] = useState([]);
   const [ok, setOk] = useState(true);
+  const [forecasts, setForecasts] = useState([]);
 
-  const API_KEY =
-    'MZs7g2PfCkpUqvD%2BibMxZH1cxGcxMpN4DuII6E4cF7qX0WtgW9fp8E4pTPph%2FzwBO4UNnr6Sh2HkTZZTgKD%2FCA%3D%3D';
-  const getWeather = async () => {
+  const getLocation = async () => {
     const { granted } = await Location.requestForegroundPermissionsAsync();
     if (!granted) {
       setOk(false);
@@ -31,9 +30,11 @@ export default function App() {
       { latitude, longitude },
       { useGoogleMaps: false }
     );
-    // 사용자의 Location을 받아옴
     setCity(location[0].city);
-    // 사용자의 도시명을 설정
+  };
+  const getWeather = async () => {
+    const API_KEY =
+      'MZs7g2PfCkpUqvD%2BibMxZH1cxGcxMpN4DuII6E4cF7qX0WtgW9fp8E4pTPph%2FzwBO4UNnr6Sh2HkTZZTgKD%2FCA%3D%3D';
 
     const x = 58;
     const y = 74;
@@ -46,23 +47,19 @@ export default function App() {
     console.log(dateStr); // "20230501"
 
     const response = await fetch(
-      `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?dataType=json&serviceKey=MZs7g2PfCkpUqvD%2BibMxZH1cxGcxMpN4DuII6E4cF7qX0WtgW9fp8E4pTPph%2FzwBO4UNnr6Sh2HkTZZTgKD%2FCA%3D%3D&numOfRows=160&pageNo=1&base_date=${dateStr}&base_time=0200&nx=58&ny=74`
+      `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?dataType=json&serviceKey=${API_KEY}&numOfRows=160&pageNo=1&base_date=${dateStr}&base_time=0200&nx=58&ny=74`
     );
     const json = await response.json();
+    setForecasts(json.response.body.items.item);
+    const fcstValues = forecasts.map((item) => item.fcstValue);
 
-    // 공공데이터 날씨 API 사용하여 받아옴 #dev1
-    // 수정할점
-    // 1. baseDate -> 오늘의 날짜, format: 20230501 (#dev1)
-    // 2. baseTime -> 0
-
-    console.log(latitude, longitude);
-    console.log(json);
-    // 1. 일 최저기온 최고기온 가져오기
-    // 2. 강수량 가져오기
+    console.log(fcstValues);
   };
   useEffect(() => {
+    getLocation();
     getWeather();
-  });
+  }, []);
+
   return (
     // 뷰의 배경이 미세먼지 농도에 따라 바뀌도록 설정해도 좋을듯?
     <View style={styles.container}>

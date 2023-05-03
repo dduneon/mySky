@@ -17,8 +17,12 @@ export default function App() {
   const [city, setCity] = useState('Loading..');
   const [ok, setOk] = useState(true);
   const [forecasts, setForecasts] = useState([]);
+  const [high, setHigh] = useState(0);
+  const [low, setLow] = useState(0);
+  const [pop, setPop] = useState(false);
 
   const getLocation = async () => {
+    console.log('getLocation start');
     const { granted } = await Location.requestForegroundPermissionsAsync();
     if (!granted) {
       setOk(false);
@@ -33,6 +37,8 @@ export default function App() {
     setCity(location[0].city);
   };
   const getWeather = async () => {
+    console.log('getWeather start');
+
     const API_KEY =
       'MZs7g2PfCkpUqvD%2BibMxZH1cxGcxMpN4DuII6E4cF7qX0WtgW9fp8E4pTPph%2FzwBO4UNnr6Sh2HkTZZTgKD%2FCA%3D%3D';
 
@@ -42,23 +48,35 @@ export default function App() {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    const hour = today.getHours();
+    const checkDay = hour >= 2 ? today.getDate() : today.getDate() - 1;
+    const day = String(checkDay).padStart(2, '0');
     const dateStr = `${year}${month}${day}`;
-    console.log(dateStr); // "20230501"
+    //console.log(dateStr); // "20230501"
 
     const response = await fetch(
       `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?dataType=json&serviceKey=${API_KEY}&numOfRows=160&pageNo=1&base_date=${dateStr}&base_time=0200&nx=58&ny=74`
     );
     const json = await response.json();
-    setForecasts(json.response.body.items.item);
-    const fcstValues = forecasts.map((item) => item.fcstValue);
+    const jsonData = json.response.body.items.item;
+    //console.log(jsonData.length, jsonData[1].category);
 
-    console.log(fcstValues);
+    for (let i = 0; i < jsonData.length; i++) {
+      if (jsonData[i].category === 'TMX') setHigh(jsonData[i].fcstValue);
+      else if (jsonData[i].category === 'TMN') {
+        setLow(jsonData[i].fcstValue);
+        //console.log(jsonData[i].fcstTime);
+      } else if (jsonData[i].category === 'POP') {
+        if (jsonData[i].fcstValue !== 0) setPop(true);
+      }
+    }
+
+    console.log(high, low, pop);
   };
   useEffect(() => {
     getLocation();
     getWeather();
-  }, []);
+  });
 
   return (
     // 뷰의 배경이 미세먼지 농도에 따라 바뀌도록 설정해도 좋을듯?
@@ -72,7 +90,20 @@ export default function App() {
         pagingEnabled
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.weather}
-      ></ScrollView>
+      >
+        <View sytle={styles.tempview}>
+          <View>
+            <Text sytle={styles.description}>max</Text>
+            <Text style={styles.temp}>{high}</Text>
+          </View>
+          <View>
+            <Text style={styles.temp}>{low}</Text>
+          </View>
+        </View>
+        <View style={styles.tempview}>
+          <Text>Test</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -89,7 +120,6 @@ const styles = StyleSheet.create({
   },
   cityName: {
     fontSize: 68,
-    fontWeight: 500,
   },
   weather: {},
   day: {
@@ -97,11 +127,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   temp: {
-    marginTop: 50,
-    fontSize: 178,
+    fontSize: 80,
+  },
+  tempview: {
+    marginTop: 20,
+    marginLeft: 20,
   },
   description: {
     marginTop: -30,
-    fontSize: 60,
+    fontSize: 40,
   },
 });

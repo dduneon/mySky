@@ -104,24 +104,29 @@ export default function App() {
         contentContainerStyle={styles.weather}
       >
         <View sytle={styles.tempview}>
-          <View
-            style={{
-              flexDirection: 'column',
-              alignItems: 'center',
-              width: '100%',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Text sytle={styles.description}>max</Text>
-            <Text style={styles.temp}>{forecasts.high}</Text>
-            <Text sytle={styles.description}>min</Text>
-            <Text style={styles.temp}>{forecasts.low}</Text>
-            <Text sytle={styles.description}>rain</Text>
-            <Text style={styles.temp}>{forecasts.pop ? 'True' : 'False'}</Text>
-          </View>
+          {forecasts.length === 0 ? (
+            <View style={styles.day}>
+              <ActivityIndicator
+                color="white"
+                style={{ marginTop: 10 }}
+                size="large"
+              />
+            </View>
+          ) : (
+            <View style={styles.day}>
+              <Text sytle={styles.description}>max</Text>
+              <Text style={styles.temp}>{forecasts.high}</Text>
+              <Text sytle={styles.description}>min</Text>
+              <Text style={styles.temp}>{forecasts.low}</Text>
+              <Text sytle={styles.description}>rain</Text>
+              <Text style={styles.temp}>
+                {forecasts.pop ? 'True' : 'False'}
+              </Text>
+            </View>
+          )}
         </View>
-        <View style={styles.tempview}>
-          <Text>Test</Text>
+        <View style={styles.day}>
+          <Text>미세먼지 농도</Text>
         </View>
       </ScrollView>
     </View>
@@ -132,6 +137,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'tomato',
+  },
+  day: {
+    width: SCREEN_WIDTH,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   city: {
     flex: 1.2,

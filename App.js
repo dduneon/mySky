@@ -17,10 +17,8 @@ export default function App() {
   const [city, setCity] = useState('Loading..');
   const [ok, setOk] = useState(true);
   const [forecasts, setForecasts] = useState([]);
-  const [high, setHigh] = useState(0);
-  const [low, setLow] = useState(0);
-  const [pop, setPop] = useState(false);
-
+  const [weatherOk, setWeatherOk] = useState(false);
+  const [poptime, setPoptime] = useState([]);
   const getLocation = async () => {
     console.log('getLocation start');
     const { granted } = await Location.requestForegroundPermissionsAsync();
@@ -58,25 +56,39 @@ export default function App() {
       `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?dataType=json&serviceKey=${API_KEY}&numOfRows=160&pageNo=1&base_date=${dateStr}&base_time=0200&nx=58&ny=74`
     );
     const json = await response.json();
-    const jsonData = json.response.body.items.item;
+    const jsonData = await json.response.body.items.item;
     //console.log(jsonData.length, jsonData[1].category);
+    if (jsonData.length > 0) setWeatherOk(true);
 
-    for (let i = 0; i < jsonData.length; i++) {
-      if (jsonData[i].category === 'TMX') setHigh(jsonData[i].fcstValue);
-      else if (jsonData[i].category === 'TMN') {
-        setLow(jsonData[i].fcstValue);
-        //console.log(jsonData[i].fcstTime);
-      } else if (jsonData[i].category === 'POP') {
-        if (jsonData[i].fcstValue !== 0) setPop(true);
+    const newForecast = {};
+    const poptime = [];
+    if (weatherOk === true) {
+      for (let i = 0; i < jsonData.length; i++) {
+        if (jsonData[i].category === 'TMX')
+          newForecast.high = jsonData[i].fcstValue;
+        else if (jsonData[i].category === 'TMN')
+          newForecast.low = jsonData[i].fcstValue;
+        else if (jsonData[i].category === 'POP') {
+          if (parseInt(jsonData[i].fcstValue, 8) > 0) {
+            newForecast.pop = true;
+            const newPoptime = poptime.concat({
+              time: jsonData[i].fcstTime,
+              value: jsonData[i].fcstValue,
+            });
+            setPoptime(newPoptime);
+          }
+        }
       }
     }
-
-    console.log(high, low, pop);
+    console.log(poptime.length);
+    setForecasts(newForecast);
   };
   useEffect(() => {
     getLocation();
+  }, [ok]);
+  useEffect(() => {
     getWeather();
-  });
+  }, [weatherOk]);
 
   return (
     // 뷰의 배경이 미세먼지 농도에 따라 바뀌도록 설정해도 좋을듯?
@@ -92,12 +104,20 @@ export default function App() {
         contentContainerStyle={styles.weather}
       >
         <View sytle={styles.tempview}>
-          <View>
+          <View
+            style={{
+              flexDirection: 'column',
+              alignItems: 'center',
+              width: '100%',
+              justifyContent: 'space-between',
+            }}
+          >
             <Text sytle={styles.description}>max</Text>
-            <Text style={styles.temp}>{high}</Text>
-          </View>
-          <View>
-            <Text style={styles.temp}>{low}</Text>
+            <Text style={styles.temp}>{forecasts.high}</Text>
+            <Text sytle={styles.description}>min</Text>
+            <Text style={styles.temp}>{forecasts.low}</Text>
+            <Text sytle={styles.description}>rain</Text>
+            <Text style={styles.temp}>{forecasts.pop ? 'True' : 'False'}</Text>
           </View>
         </View>
         <View style={styles.tempview}>
@@ -122,16 +142,13 @@ const styles = StyleSheet.create({
     fontSize: 68,
   },
   weather: {},
-  day: {
+  tempview: {
     width: SCREEN_WIDTH,
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
   },
   temp: {
     fontSize: 80,
-  },
-  tempview: {
-    marginTop: 20,
-    marginLeft: 20,
   },
   description: {
     marginTop: -30,

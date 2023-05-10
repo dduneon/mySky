@@ -11,14 +11,16 @@ import { StatusBar } from 'expo-status-bar';
 import * as Location from 'expo-location';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-console.log(SCREEN_WIDTH);
+console.log('SCREEN_WIDTH: ' + SCREEN_WIDTH);
 
 export default function App() {
   const [city, setCity] = useState('Loading..');
   const [ok, setOk] = useState(true);
   const [forecasts, setForecasts] = useState([]);
   const [weatherOk, setWeatherOk] = useState(false);
-  const [poptime, setPoptime] = useState([]);
+  let poptime = [];
+  const newForecast = {};
+
   const getLocation = async () => {
     console.log('getLocation start');
     const { granted } = await Location.requestForegroundPermissionsAsync();
@@ -60,8 +62,6 @@ export default function App() {
     //console.log(jsonData.length, jsonData[1].category);
     if (jsonData.length > 0) setWeatherOk(true);
 
-    const newForecast = {};
-    const poptime = [];
     if (weatherOk === true) {
       for (let i = 0; i < jsonData.length; i++) {
         if (jsonData[i].category === 'TMX')
@@ -70,18 +70,17 @@ export default function App() {
           newForecast.low = jsonData[i].fcstValue;
         else if (jsonData[i].category === 'POP') {
           if (parseInt(jsonData[i].fcstValue, 8) > 0) {
-            newForecast.pop = true;
-            const newPoptime = poptime.concat({
+            if (!newForecast.pop) newForecast.pop = true;
+            poptime = poptime.concat({
               time: jsonData[i].fcstTime,
               value: jsonData[i].fcstValue,
             });
-            setPoptime(newPoptime);
           }
         }
       }
     }
-    console.log(poptime.length);
     setForecasts(newForecast);
+    console.log(poptime);
   };
   useEffect(() => {
     getLocation();
@@ -125,8 +124,13 @@ export default function App() {
             </View>
           )}
         </View>
-        <View style={styles.day}>
-          <Text>미세먼지 농도</Text>
+        <View style={styles.tempview}>
+          {poptime.map((time, index) => (
+            <View key={index} style={styles.day}>
+              <Text>dddafdfafd</Text>
+              <Text>dddasfadfdas</Text>
+            </View>
+          ))}
         </View>
       </ScrollView>
     </View>

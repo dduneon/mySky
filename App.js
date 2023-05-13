@@ -18,6 +18,10 @@ export default function App() {
   const [ok, setOk] = useState(true);
   const [forecasts, setForecasts] = useState([]);
   const [weatherOk, setWeatherOk] = useState(false);
+  const [afPoptime, setafPoptime] = useState([]);
+  const [dust, setDust] = useState({});
+  const [dustDataOk, setDustDataOk] = useState(false);
+
   let poptime = [];
   const newForecast = {};
 
@@ -80,14 +84,51 @@ export default function App() {
       }
     }
     setForecasts(newForecast);
-    console.log(poptime);
+    setafPoptime(poptime);
   };
+  const getDust = async () => {
+    console.log('getDust start');
+
+    const API_KEY =
+      'MZs7g2PfCkpUqvD%2BibMxZH1cxGcxMpN4DuII6E4cF7qX0WtgW9fp8E4pTPph%2FzwBO4UNnr6Sh2HkTZZTgKD%2FCA%3D%3D';
+    const response = await fetch(
+      `http://apis.data.go.kr/B552584/ArpltnInforInqireSvc/getMsrstnAcctoRltmMesureDnsty?stationName=%EC%B9%98%ED%8F%89%EB%8F%99&ver=1.1&dataTerm=month&pageNo=1&numOfRows=1&returnType=json&serviceKey=${API_KEY}`
+    );
+    const json = await response.json();
+    const jsonData = await json.response.body.items[0];
+    setDust({
+      pm10Value: jsonData.pm10Value,
+      pm10Grade: jsonData.pm10Grade,
+      pm25Value: jsonData.pm25Value,
+      pm25Grade: jsonData.pm25Grade,
+    });
+    if (dust != null) setDustDataOk(true);
+  };
+  function getGradetoKOR(grade) {
+    switch (grade) {
+      case '1':
+        return '좋음';
+      case '2':
+        return '보통';
+      case '3':
+        return '나쁨';
+      case '4':
+        return '매우나쁨';
+      default:
+        return '알수없음';
+    }
+  }
   useEffect(() => {
     getLocation();
   }, [ok]);
   useEffect(() => {
     getWeather();
   }, [weatherOk]);
+  useEffect(() => {
+    getDust();
+  }, [dustDataOk]);
+
+  console.log(dust);
 
   return (
     // 뷰의 배경이 미세먼지 농도에 따라 바뀌도록 설정해도 좋을듯?
@@ -121,16 +162,28 @@ export default function App() {
               <Text style={styles.temp}>
                 {forecasts.pop ? 'True' : 'False'}
               </Text>
+              <View style={styles.popview}>
+                {afPoptime.map((time, index) => (
+                  <View key={index}>
+                    <Text>{time.time}</Text>
+                    <Text>{time.value}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
         </View>
         <View style={styles.tempview}>
-          {poptime.map((time, index) => (
-            <View key={index} style={styles.day}>
-              <Text>dddafdfafd</Text>
-              <Text>dddasfadfdas</Text>
-            </View>
-          ))}
+          <View sytle={styles.day}>
+            <Text sytle={styles.description}>미세먼지 농도</Text>
+            <Text style={styles.temp}>{dust.pm10Value}</Text>
+            <Text sytle={styles.description}>pm10Grade</Text>
+            <Text style={styles.temp}>{getGradetoKOR(dust.pm10Grade)}</Text>
+            <Text sytle={styles.description}>초미세먼지 농도</Text>
+            <Text style={styles.temp}>{dust.pm25Value}</Text>
+            <Text sytle={styles.description}>pm25Grade</Text>
+            <Text style={styles.temp}>{getGradetoKOR(dust.pm25Grade)}</Text>
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -159,14 +212,18 @@ const styles = StyleSheet.create({
   weather: {},
   tempview: {
     width: SCREEN_WIDTH,
-    alignItems: 'flex-start',
+    alignItems: 'center',
     paddingHorizontal: 20,
   },
+  popview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   temp: {
-    fontSize: 80,
+    fontSize: 70,
   },
   description: {
     marginTop: -30,
-    fontSize: 40,
+    fontSize: 30,
   },
 });
